@@ -5,31 +5,29 @@ from db_models import Data, session
 import numpy as np
 from sklearn.cluster import MeanShift, estimate_bandwidth
 from sklearn.cluster import AffinityPropagation
+
+from sklearn.preprocessing import StandardScaler
 from sklearn import metrics
 from sklearn.datasets.samples_generator import make_blobs
 
-def stringToFloat(old_string):
-	numbers = []
-	for letter in old_string:
-	  numbers.append(str(ord(letter)))
-
-	string = ''.join(numbers)
-	return float(string)/(pow(10,(len(string)-1)))
-
-X = []
+objects = []
 labels_true = []
 
-for groupID in [1,2]:
-	groups = Data.getByGroup(groupID)
-	for data_row in groups:
-		X.append([stringToFloat(data_row.alpha), stringToFloat(data_row.beta)])
-		labels_true.append(groupID)
+for groupID in range(1,3):
+  groups = Data.getByGroup(groupID)
+  for data_row in groups:
+    objects.append(data_row)
+    labels_true.append(data_row.groupID)
 
-X = np.array(X)
+dist = lambda p1, p2: Data.distance(p1,p2)
+X = np.asarray([[dist(p1, p2) for p2 in objects] for p1 in objects])
+
 labels_true = np.array(labels_true)
+
+X = StandardScaler().fit_transform(X)
 # #############################################################################
 # Compute Affinity Propagation
-af = AffinityPropagation(preference=-1).fit(X)
+af = AffinityPropagation(preference=1,affinity='precomputed').fit(X)
 cluster_centers_indices = af.cluster_centers_indices_
 labels = af.labels_
 
