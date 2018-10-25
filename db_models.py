@@ -26,9 +26,12 @@ class Data(Base):
 	@classmethod
 	def distance(self, object1, object2):
 		#return abs(object1.groupID - object2.groupID)
+
 		compress1 = zlib.compress(object1.full_string(),9)
 		compress2 = zlib.compress(object2.full_string(),9)
+
 		compressboth = zlib.compress(object1.full_string() + object2.full_string(),9)
+		
 		distance = float(len(compressboth) / float(len(compress1) + len(compress2)))
 		return distance
 

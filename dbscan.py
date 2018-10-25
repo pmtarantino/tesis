@@ -1,3 +1,6 @@
+# heatmap distancias
+# tratar de identificar grupos mas que nada
+
 import pdb
 from db_models import Data, session
 
@@ -13,7 +16,7 @@ import random
 objects = []
 labels_true = []
 
-groups_number = 2
+groups_number = 3
 
 for groupID in range(1,groups_number+1):
 	groups = Data.getByGroup(groupID)
@@ -23,12 +26,10 @@ for groupID in range(1,groups_number+1):
 
 dist = lambda p1, p2: Data.distance(p1,p2)
 X = np.asarray([[dist(p1, p2) for p2 in objects] for p1 in objects])
-
+pdb.set_trace()
 labels_true = np.array(labels_true)
 
-#X = StandardScaler().fit_transform(X)
-
-db = DBSCAN(eps=0.75, metric='precomputed').fit(X)
+db = DBSCAN(metric="precomputed", eps=0.7).fit(X)
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
 core_samples_mask[db.core_sample_indices_] = True
 labels = db.labels_
