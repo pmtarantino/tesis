@@ -5,6 +5,24 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import sessionmaker
 import zlib
 import pdb
+import stringdist
+from  sqlalchemy.sql.expression import func, select
+from random import shuffle
+
+from difflib import SequenceMatcher
+
+def similar(a, b):
+    return SequenceMatcher(None, a, b).ratio()
+
+def compress_distance(a, b, opt=9):
+	compress1 = zlib.compress(a,opt)
+	compress2 = zlib.compress(b,opt)
+
+	compressboth = zlib.compress(a + b,opt)
+	
+	return float(len(compressboth) / float(len(compress1) + len(compress2)))
+
+
 Base = declarative_base()
 
 class Data(Base):
@@ -19,21 +37,20 @@ class Data(Base):
 	def full_string(self):
 		return self.alpha + self.beta
 
+	def resorted(self):
+		s = self.alpha + self.beta
+		rango = list(range(len(s)-1))
+		shuffle(rango)
+		return (''.join([s[i] for i in rango]))
+
 	@classmethod
-	def getByGroup(self, groupID, limit=50):
-		return session.query(self).filter(self.groupID == groupID).limit(limit)
+	def getByGroup(self, groupID, limit=25):
+		return session.query(self).filter(self.groupID == groupID).order_by(func.rand()).limit(limit)
 
 	@classmethod
 	def distance(self, object1, object2):
-		#return abs(object1.groupID - object2.groupID)
 
-		compress1 = zlib.compress(object1.full_string(),9)
-		compress2 = zlib.compress(object2.full_string(),9)
-
-		compressboth = zlib.compress(object1.full_string() + object2.full_string(),9)
-		
-		distance = float(len(compressboth) / float(len(compress1) + len(compress2)))
-		return distance
+		return compress_distance(object1.alpha, object2.alpha) + compress_distance(object1.beta, object2.beta)
 
 engine = create_engine('mysql+mysqlconnector://root:root@localhost/tesis')
 Session = sessionmaker(bind=engine)
